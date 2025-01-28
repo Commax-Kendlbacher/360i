@@ -31,20 +31,29 @@ function robustDelta(currentYaw, lastYaw) {
 // Funktion zur Akkumulation von Yaw
 function accumulateYaw(currentYaw) {
     const delta = robustDelta(currentYaw, lastYaw); // Berechne Delta
+    const amplificationFactor = 5; // Verstärkungsfaktor
+    const amplifiedDelta = delta * amplificationFactor;
 
-    // Debugging: Zeige die Delta-Werte an
-    console.log(`Delta (Before Accumulation): ${delta}`);
+    // Akkumuliere verstärktes Delta
+    accumulatedYaw += amplifiedDelta;
 
-    accumulatedYaw += delta; // Akkumuliere Delta
-    lastYaw = currentYaw; // Aktualisiere `lastYaw`
+    // Begrenzen der Yaw-Werte, falls nötig
+    accumulatedYaw = Math.max(Math.min(accumulatedYaw, 2 * Math.PI), -2 * Math.PI);
+
+    // Debugging-Ausgabe
+    debugYawValues(currentYaw, delta, amplifiedDelta, accumulatedYaw);
+
+    // Aktualisiere `lastYaw`
+    lastYaw = currentYaw;
 
     return accumulatedYaw; // Gib den akkumulierten Yaw-Wert zurück
 }
 
 // Debugging-Funktion zur Ausgabe von Werten
-function debugYawValues(currentYaw, delta, accumulatedYaw) {
+function debugYawValues(currentYaw, delta, amplifiedDelta, accumulatedYaw) {
     console.log(`Current Yaw: ${currentYaw}`);
     console.log(`Delta Yaw: ${delta}`);
+    console.log(`Amplified Delta Yaw: ${amplifiedDelta}`);
     console.log(`Accumulated Yaw: ${accumulatedYaw}`);
     console.log(`Last Yaw: ${lastYaw}`);
 }
@@ -86,11 +95,7 @@ function init() {
         const currentYaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
 
         // Akkumuliere den Yaw-Wert
-        const delta = robustDelta(currentYaw, lastYaw);
         const continuousYaw = accumulateYaw(currentYaw);
-
-        // Debugging: Überprüfe die Werte
-        debugYawValues(currentYaw, delta, continuousYaw);
 
         // Berechnung von Pitch und Roll
         const rawPitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
