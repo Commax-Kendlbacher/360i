@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>360° Panorama Viewer</title>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/examples/js/controls/DeviceOrientationControls.js"></script>
     <style>
         body {
             margin: 0;
@@ -17,7 +15,10 @@
     </style>
 </head>
 <body>
-    <script>
+    <script type="module">
+        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.module.js';
+        import { DeviceOrientationControls } from 'https://cdn.jsdelivr.net/npm/three@0.154.0/examples/jsm/controls/DeviceOrientationControls.js';
+
         let scene, camera, renderer, controls;
 
         function init() {
@@ -35,19 +36,20 @@
 
             // 360° Bild laden
             const textureLoader = new THREE.TextureLoader();
-            const texture = textureLoader.load('test.jpg'); // Dein Bild hier
+            const texture = textureLoader.load('test.jpg', () => {
+                console.log('Texture loaded successfully!');
+            });
 
             // Kugel-Geometrie erstellen
             const geometry = new THREE.SphereGeometry(500, 60, 40);
             geometry.scale(-1, 1, 1); // Um die Textur nach innen zu projizieren
 
-            // Material mit Textur
             const material = new THREE.MeshBasicMaterial({ map: texture });
             const sphere = new THREE.Mesh(geometry, material);
             scene.add(sphere);
 
-            // Bewegungskontrollen für das Handy
-            controls = new THREE.DeviceOrientationControls(camera);
+            // Bewegungskontrollen aktivieren
+            controls = new DeviceOrientationControls(camera);
         }
 
         function animate() {
