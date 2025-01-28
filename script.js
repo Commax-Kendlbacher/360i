@@ -5,10 +5,22 @@ let initialAlpha = 0, initialBeta = 0, initialGamma = 0;
 let isCalibrated = false;
 
 let smoothYaw = 0, smoothPitch = 0, smoothRoll = 0;
+let previousYaw = 0; // Für kontinuierliche Yaw-Berechnung
 
 function applySmoothing(current, target, smoothingFactor = 0.1, maxDelta = Math.PI / 8) {
     if (Math.abs(target - current) > maxDelta) return current; // Ignoriere zu große Änderungen
     return current + (target - current) * smoothingFactor;
+}
+
+function normalizeYaw(currentYaw, previousYaw) {
+    const delta = currentYaw - previousYaw;
+
+    if (delta > Math.PI) {
+        return previousYaw + (delta - 2 * Math.PI);
+    } else if (delta < -Math.PI) {
+        return previousYaw + (delta + 2 * Math.PI);
+    }
+    return currentYaw;
 }
 
 function init() {
@@ -41,7 +53,10 @@ function init() {
             isCalibrated = true;
         }
 
-        const rawYaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
+        const currentYaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
+        const rawYaw = normalizeYaw(currentYaw, previousYaw);
+        previousYaw = rawYaw;
+
         const rawPitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
         const rawRoll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
 
@@ -53,16 +68,6 @@ function init() {
 
         camera.rotation.set(smoothPitch, smoothYaw, -smoothRoll);
     });
-
-    window.addEventListener('deviceorientation', debugOrientation);
-}
-
-function debugOrientation(event) {
-    console.log("Orientation Data:");
-    console.log(`Alpha (Yaw): ${event.alpha}`);
-    console.log(`Beta (Pitch): ${event.beta}`);
-    console.log(`Gamma (Roll): ${event.gamma}`);
-    console.log(`Device Orientation: ${window.orientation || 0}`);
 }
 
 function animate() {
