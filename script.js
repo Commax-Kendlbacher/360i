@@ -29,10 +29,22 @@ function handleOrientation(event) {
         yaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
         pitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
         roll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
+
+        // Stabilisierung für Hoch-/Runterschauen bei 0° und 180°
+        if (event.beta > 90) {
+            pitch = Math.PI - pitch; // Invertiere Pitch
+            yaw += Math.PI; // Passe Yaw an
+        }
     } else {
         yaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
         pitch = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma); // Gamma wird Pitch
         roll = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);   // Beta wird Roll
+
+        // Stabilisierung für Hoch-/Runterschauen bei 0° und 180°
+        if (event.gamma > 90) {
+            pitch = Math.PI - pitch; // Invertiere Pitch
+            yaw += Math.PI; // Passe Yaw an
+        }
     }
 
     // Begrenze Pitch (Hoch-/Runterschauen)
