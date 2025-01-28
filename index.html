@@ -17,9 +17,8 @@
 <body>
     <script type="module">
         import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.module.js';
-        import { DeviceOrientationControls } from 'https://cdn.jsdelivr.net/npm/three@0.154.0/examples/jsm/controls/DeviceOrientationControls.js';
 
-        let scene, camera, renderer, controls;
+        let scene, camera, renderer;
 
         function init() {
             // Szene erstellen
@@ -27,7 +26,7 @@
 
             // Kamera erstellen
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 0, 0.1); // Kamera leicht aus dem Zentrum der Kugel
+            camera.position.set(0, 0, 0.1);
 
             // Renderer erstellen
             renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -40,21 +39,25 @@
                 console.log('Texture loaded successfully!');
             });
 
-            // Kugel-Geometrie erstellen
             const geometry = new THREE.SphereGeometry(500, 60, 40);
-            geometry.scale(-1, 1, 1); // Um die Textur nach innen zu projizieren
+            geometry.scale(-1, 1, 1);
 
             const material = new THREE.MeshBasicMaterial({ map: texture });
             const sphere = new THREE.Mesh(geometry, material);
             scene.add(sphere);
 
-            // Bewegungskontrollen aktivieren
-            controls = new DeviceOrientationControls(camera);
+            // Bewegungssensor-Daten verwenden
+            window.addEventListener('deviceorientation', (event) => {
+                const alpha = THREE.MathUtils.degToRad(event.alpha || 0); // Rotation um die Y-Achse
+                const beta = THREE.MathUtils.degToRad(event.beta || 0);   // Rotation um die X-Achse
+                const gamma = THREE.MathUtils.degToRad(event.gamma || 0); // Rotation um die Z-Achse
+
+                camera.rotation.set(beta, alpha, gamma);
+            });
         }
 
         function animate() {
             requestAnimationFrame(animate);
-            controls.update();
             renderer.render(scene, camera);
         }
 
