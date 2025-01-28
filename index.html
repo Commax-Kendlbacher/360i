@@ -72,13 +72,13 @@
                     isCalibrated = true;
                 }
 
-                // Aktuelle Werte relativ zu den Kalibrierungswerten berechnen
-                const alpha = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
-                const beta = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
-                const gamma = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
+                // Werte relativ zur Kalibrierung berechnen
+                const yaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha); // Yaw: Links/Rechts drehen
+                const pitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta); // Pitch: Hoch/Runter schauen
+                const roll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma); // Roll: Neigen
 
-                // Kamera-Rotation setzen
-                camera.rotation.set(beta, alpha, gamma);
+                // Kamerarotation setzen
+                camera.rotation.set(pitch, yaw, -roll);
             });
         }
 
