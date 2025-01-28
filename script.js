@@ -4,32 +4,14 @@ let scene, camera, renderer;
 let initialAlpha = 0, initialBeta = 0, initialGamma = 0;
 let isCalibrated = false;
 
-let smoothYaw = 0, smoothPitch = 0, smoothRoll = 0;
-let accumulatedYaw = 0;
-let lastYaw = 0;
+let quaternion = new THREE.Quaternion(); // Quaternion für Rotation
+let smoothQuaternion = new THREE.Quaternion(); // Geglättete Rotation
 
 let orientationMode = 'portrait'; // 'portrait' oder 'landscape'
 
-// Funktion zur Glättung der Bewegung
-function applySmoothing(current, target, smoothingFactor = 0.1, maxDelta = Math.PI / 8) {
-    if (Math.abs(target - current) > maxDelta) return current;
-    return current + (target - current) * smoothingFactor;
-}
-
-function accumulateYaw(currentYaw) {
-    const delta = currentYaw - lastYaw;
-
-    // Überprüfen auf Sprünge bei 360°-Grenzen
-    if (delta > Math.PI) {
-        accumulatedYaw -= 2 * Math.PI;
-    } else if (delta < -Math.PI) {
-        accumulatedYaw += 2 * Math.PI;
-    }
-
-    accumulatedYaw += delta;
-    lastYaw = currentYaw;
-
-    return accumulatedYaw;
+// Funktion zur Quaternion-Glättung
+function applyQuaternionSmoothing(current, target, smoothingFactor = 0.1) {
+    return current.slerp(target, smoothingFactor); // Smoother Übergang
 }
 
 function handleOrientation(event) {
@@ -40,31 +22,28 @@ function handleOrientation(event) {
         isCalibrated = true;
     }
 
-    // Berechnung der Achsen basierend auf der Orientierung
-    let currentYaw, rawPitch, rawRoll;
+    // Aktuelle Orientierung prüfen (vorher festgelegt)
+    let yaw, pitch, roll;
 
     if (orientationMode === 'portrait') {
-        currentYaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
-        rawPitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
-        rawRoll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
+        yaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
+        pitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
+        roll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
     } else {
-        currentYaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
-        rawPitch = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma); // Gamma wird Pitch
-        rawRoll = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);   // Beta wird Roll
+        yaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
+        pitch = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma); // Gamma wird Pitch
+        roll = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);   // Beta wird Roll
     }
 
-    const continuousYaw = accumulateYaw(currentYaw);
-
     // Begrenze Pitch (Hoch-/Runterschauen)
-    const clampedPitch = Math.max(Math.min(rawPitch, Math.PI / 2 - 0.1), -Math.PI / 2 + 0.1);
+    const clampedPitch = Math.max(Math.min(pitch, Math.PI / 2 - 0.1), -Math.PI / 2 + 0.1);
 
-    // Glättung
-    smoothYaw = applySmoothing(smoothYaw, continuousYaw);
-    smoothPitch = applySmoothing(smoothPitch, clampedPitch);
-    smoothRoll = applySmoothing(smoothRoll, rawRoll);
+    // Erstelle eine neue Quaternion basierend auf Yaw, Pitch und Roll
+    quaternion.setFromEuler(new THREE.Euler(clampedPitch, yaw, -roll, 'YXZ'));
 
-    // Setze die Kamerarotation
-    camera.rotation.set(smoothPitch, smoothYaw, -smoothRoll);
+    // Glätte die Quaternion
+    smoothQuaternion = applyQuaternionSmoothing(smoothQuaternion, quaternion);
+    camera.quaternion.copy(smoothQuaternion); // Setze die Kamerarotation
 }
 
 function init() {
