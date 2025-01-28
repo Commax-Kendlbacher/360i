@@ -15,10 +15,11 @@ function applySmoothing(current, target, smoothingFactor = 0.1, maxDelta = Math.
 function normalizeYaw(currentYaw, previousYaw) {
     const delta = currentYaw - previousYaw;
 
+    // Wenn der Delta-Wert zu groß ist, korrigiere ihn
     if (delta > Math.PI) {
-        return previousYaw + (delta - 2 * Math.PI);
+        return currentYaw - 2 * Math.PI;
     } else if (delta < -Math.PI) {
-        return previousYaw + (delta + 2 * Math.PI);
+        return currentYaw + 2 * Math.PI;
     }
     return currentYaw;
 }
@@ -54,15 +55,15 @@ function init() {
         }
 
         const currentYaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
-        const rawYaw = normalizeYaw(currentYaw, previousYaw);
-        previousYaw = rawYaw;
+        const normalizedYaw = normalizeYaw(currentYaw, previousYaw);
+        previousYaw = normalizedYaw;
 
         const rawPitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
         const rawRoll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
 
         const clampedPitch = Math.max(Math.min(rawPitch, Math.PI / 2 - 0.1), -Math.PI / 2 + 0.1);
 
-        smoothYaw = applySmoothing(smoothYaw, rawYaw);
+        smoothYaw = applySmoothing(smoothYaw, normalizedYaw);
         smoothPitch = applySmoothing(smoothPitch, clampedPitch);
         smoothRoll = applySmoothing(smoothRoll, rawRoll);
 
