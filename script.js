@@ -5,20 +5,25 @@ let initialAlpha = 0, initialBeta = 0, initialGamma = 0;
 let isCalibrated = false;
 
 function init() {
+    // Szene erstellen
     scene = new THREE.Scene();
 
+    // Kamera erstellen
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 0, 0.1);
 
+    // Renderer erstellen
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
+    // 360° Bild laden
     const textureLoader = new THREE.TextureLoader();
     const texture = textureLoader.load('test.jpg', () => {
         console.log('Texture loaded successfully!');
     });
 
+    // Kugel-Geometrie erstellen
     const geometry = new THREE.SphereGeometry(500, 128, 128);
     geometry.scale(-1, 1, 1);
 
@@ -26,6 +31,7 @@ function init() {
     const sphere = new THREE.Mesh(geometry, material);
     scene.add(sphere);
 
+    // Bewegungssensor-Daten verwenden
     window.addEventListener('deviceorientation', (event) => {
         if (!isCalibrated) {
             initialAlpha = event.alpha || 0;
@@ -38,7 +44,8 @@ function init() {
         const pitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
         const roll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
 
-        camera.rotation.set(pitch, yaw, -roll); // Entferne Begrenzung für Hoch-/Runterschauen
+        // Pitch optimieren: Keine Begrenzung für Hoch-/Runterschauen
+        camera.rotation.set(pitch, yaw, -roll);
     });
 }
 
@@ -58,7 +65,7 @@ document.getElementById('startButton').addEventListener('click', () => {
         DeviceMotionEvent.requestPermission()
             .then((permissionState) => {
                 if (permissionState === 'granted') {
-                    enterFullscreen(); // Aktiviert Vollbildmodus
+                    enterFullscreen(); // Vollbildmodus aktivieren
                     init();
                     animate();
                     document.getElementById('startButton').style.display = 'none';
@@ -68,7 +75,7 @@ document.getElementById('startButton').addEventListener('click', () => {
             })
             .catch(console.error);
     } else {
-        enterFullscreen(); // Aktiviert Vollbildmodus
+        enterFullscreen(); // Vollbildmodus aktivieren
         init();
         animate();
         document.getElementById('startButton').style.display = 'none';
@@ -76,9 +83,15 @@ document.getElementById('startButton').addEventListener('click', () => {
 });
 
 function enterFullscreen() {
-    if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen();
-    } else if (document.documentElement.webkitRequestFullscreen) {
-        document.documentElement.webkitRequestFullscreen(); // Safari
+    const element = document.documentElement; // Vollbildmodus für das gesamte Dokument
+
+    if (element.requestFullscreen) {
+        element.requestFullscreen();
+    } else if (element.webkitRequestFullscreen) { // Safari
+        element.webkitRequestFullscreen();
+    } else if (element.msRequestFullscreen) { // Ältere Browser
+        element.msRequestFullscreen();
+    } else {
+        alert('Fullscreen not supported on this device/browser.');
     }
 }
