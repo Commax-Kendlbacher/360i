@@ -31,16 +31,16 @@ function handleOrientation(event) {
 
     if (orientationMode === 'portrait') {
         yaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
-        pitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
+        pitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta) * -1; // Invertiere Pitch
         roll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
 
         if (event.beta > 90) {
-            pitch = Math.PI - pitch; // Invertiere Pitch
-            yaw += Math.PI; // Passe Yaw an
+            pitch = Math.PI - pitch; // Passe Pitch an, wenn das Gerät auf dem Kopf ist
+            yaw += Math.PI; // Passe Yaw entsprechend an
         }
     } else {
         yaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
-        pitch = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
+        pitch = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma) * -1; // Invertiere Pitch
         roll = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
 
         if (event.gamma > 90) {
@@ -49,7 +49,7 @@ function handleOrientation(event) {
         }
     }
 
-    // Begrenze Pitch (Hoch-/Runterschauen)
+    // Begrenze Pitch (Hoch-/Runterschauen) und invertiere bei Bedarf
     const clampedPitch = Math.max(Math.min(pitch, Math.PI / 2 - 0.2), -Math.PI / 2 + 0.2);
 
     // Debugging-Ausgabe
