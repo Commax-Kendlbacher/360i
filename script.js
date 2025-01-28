@@ -19,14 +19,13 @@ function init() {
         console.log('Texture loaded successfully!');
     });
 
-    const geometry = new THREE.SphereGeometry(500, 128, 128); // Hochauflösende Kugel
+    const geometry = new THREE.SphereGeometry(500, 128, 128);
     geometry.scale(-1, 1, 1);
 
     const material = new THREE.MeshBasicMaterial({ map: texture });
     const sphere = new THREE.Mesh(geometry, material);
     scene.add(sphere);
 
-    // Bewegungssensor-Daten verwenden
     window.addEventListener('deviceorientation', (event) => {
         if (!isCalibrated) {
             initialAlpha = event.alpha || 0;
@@ -35,13 +34,16 @@ function init() {
             isCalibrated = true;
         }
 
+        // Gyroskop-Daten auslesen
         const yaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha); // Links/Rechts drehen
         const pitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta); // Hoch/Runter schauen
         const roll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma); // Seitliches Neigen
 
-        // Setzen der Kamerarotation für alle Achsen
+        console.log(`Yaw: ${yaw}, Pitch: ${pitch}, Roll: ${roll}`); // Debugging-Ausgabe
+
+        // Kamerarotation setzen
         camera.rotation.set(
-            Math.max(Math.min(pitch, Math.PI / 2), -Math.PI / 2), // Pitch (begrenzen für Stabilität)
+            pitch, // Pitch
             yaw, // Yaw
             -roll // Roll
         );
@@ -64,7 +66,6 @@ document.getElementById('startButton').addEventListener('click', () => {
         DeviceMotionEvent.requestPermission()
             .then((permissionState) => {
                 if (permissionState === 'granted') {
-                    enterFullscreen();
                     init();
                     animate();
                     document.getElementById('startButton').style.display = 'none';
@@ -74,23 +75,8 @@ document.getElementById('startButton').addEventListener('click', () => {
             })
             .catch(console.error);
     } else {
-        enterFullscreen();
         init();
         animate();
         document.getElementById('startButton').style.display = 'none';
     }
 });
-
-function enterFullscreen() {
-    const element = document.documentElement;
-
-    if (element.requestFullscreen) {
-        element.requestFullscreen();
-    } else if (element.webkitRequestFullscreen) {
-        element.webkitRequestFullscreen(); // Safari auf iOS
-    } else if (element.msRequestFullscreen) {
-        element.msRequestFullscreen();
-    } else {
-        alert('Fullscreen not supported on this device/browser.');
-    }
-}
