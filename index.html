@@ -8,13 +8,20 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
-        body {
+        body, html {
             margin: 0;
+            padding: 0;
             overflow: hidden;
+            height: 100vh; /* Nimmt die gesamte Höhe des Bildschirms ein */
+            width: 100vw;  /* Nimmt die gesamte Breite des Bildschirms ein */
         }
+
         canvas {
-            display: block;
+            display: block; /* Verhindert Scrollbars um das Canvas */
+            height: 100%;
+            width: 100%;
         }
+
         #startButton {
             position: absolute;
             top: 50%;
@@ -27,6 +34,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            z-index: 10; /* Stellt sicher, dass der Button über dem Canvas liegt */
         }
     </style>
 </head>
