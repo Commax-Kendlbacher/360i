@@ -4,6 +4,12 @@ let scene, camera, renderer;
 let initialAlpha = 0, initialBeta = 0, initialGamma = 0;
 let isCalibrated = false;
 
+let smoothYaw = 0, smoothPitch = 0, smoothRoll = 0;
+
+function applySmoothing(current, target, smoothingFactor = 0.1) {
+    return current + (target - current) * smoothingFactor;
+}
+
 function init() {
     scene = new THREE.Scene();
 
@@ -34,18 +40,16 @@ function init() {
             isCalibrated = true;
         }
 
-        // Gyroskop-Daten auslesen
-        const yaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha); // Links/Rechts drehen
-        const pitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta); // Hoch/Runter schauen
-        const roll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma); // Seitliches Neigen
+        // Smoothe Zielwerte berechnen
+        smoothYaw = applySmoothing(smoothYaw, THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha));
+        smoothPitch = applySmoothing(smoothPitch, THREE.MathUtils.degToRad((event.beta || 0) - initialBeta));
+        smoothRoll = applySmoothing(smoothRoll, THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma));
 
-        console.log(`Yaw: ${yaw}, Pitch: ${pitch}, Roll: ${roll}`); // Debugging-Ausgabe
-
-        // Kamerarotation setzen
+        // Begrenze Pitch-Werte (Hoch-/Runterschauen) auf ±90° und setze die Rotation
         camera.rotation.set(
-            pitch, // Pitch
-            yaw, // Yaw
-            -roll // Roll
+            Math.max(Math.min(smoothPitch, Math.PI / 2), -Math.PI / 2), // Begrenzter Pitch
+            smoothYaw, // Smoothed Yaw
+            -smoothRoll // Smoothed Roll
         );
     });
 }
@@ -55,6 +59,13 @@ function animate() {
     renderer.render(scene, camera);
 }
 
+function showIOSFullscreenHint() {
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isIOS) {
+        alert('For the best experience, please add this page to your home screen: Tap the share button in Safari and select "Add to Home Screen".');
+    }
+}
+
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
@@ -62,21 +73,8 @@ window.addEventListener('resize', () => {
 });
 
 document.getElementById('startButton').addEventListener('click', () => {
-    if (typeof DeviceMotionEvent.requestPermission === 'function') {
-        DeviceMotionEvent.requestPermission()
-            .then((permissionState) => {
-                if (permissionState === 'granted') {
-                    init();
-                    animate();
-                    document.getElementById('startButton').style.display = 'none';
-                } else {
-                    alert('Permission denied for motion sensors.');
-                }
-            })
-            .catch(console.error);
-    } else {
-        init();
-        animate();
-        document.getElementById('startButton').style.display = 'none';
-    }
+    showIOSFullscreenHint(); // Hinweis für iOS
+    init();
+    animate();
+    document.getElementById('startButton').style.display = 'none';
 });
