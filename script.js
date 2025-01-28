@@ -14,6 +14,11 @@ function applyQuaternionSmoothing(current, target, smoothingFactor = 0.1) {
     return current.slerp(target, smoothingFactor); // Smoother Übergang
 }
 
+// Debugging-Funktion
+function debugOrientation(yaw, pitch, roll) {
+    console.log(`Yaw: ${yaw.toFixed(2)} rad, Pitch: ${pitch.toFixed(2)} rad, Roll: ${roll.toFixed(2)} rad`);
+}
+
 function handleOrientation(event) {
     if (!isCalibrated) {
         initialAlpha = event.alpha || 0;
@@ -22,7 +27,6 @@ function handleOrientation(event) {
         isCalibrated = true;
     }
 
-    // Aktuelle Orientierung prüfen (vorher festgelegt)
     let yaw, pitch, roll;
 
     if (orientationMode === 'portrait') {
@@ -30,25 +34,26 @@ function handleOrientation(event) {
         pitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
         roll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
 
-        // Stabilisierung für Hoch-/Runterschauen bei 0° und 180°
         if (event.beta > 90) {
             pitch = Math.PI - pitch; // Invertiere Pitch
             yaw += Math.PI; // Passe Yaw an
         }
     } else {
         yaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
-        pitch = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma); // Gamma wird Pitch
-        roll = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);   // Beta wird Roll
+        pitch = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
+        roll = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
 
-        // Stabilisierung für Hoch-/Runterschauen bei 0° und 180°
         if (event.gamma > 90) {
-            pitch = Math.PI - pitch; // Invertiere Pitch
-            yaw += Math.PI; // Passe Yaw an
+            pitch = Math.PI - pitch;
+            yaw += Math.PI;
         }
     }
 
-    // Begrenze Pitch (Hoch-/Runterschauen) strikter
+    // Begrenze Pitch (Hoch-/Runterschauen)
     const clampedPitch = Math.max(Math.min(pitch, Math.PI / 2 - 0.2), -Math.PI / 2 + 0.2);
+
+    // Debugging-Ausgabe
+    debugOrientation(yaw, clampedPitch, roll);
 
     // Erstelle eine neue Quaternion basierend auf Yaw, Pitch und Roll
     quaternion.setFromEuler(new THREE.Euler(clampedPitch, yaw, -roll, 'YXZ'));
@@ -95,7 +100,6 @@ window.addEventListener('resize', () => {
 });
 
 document.getElementById('startButton').addEventListener('click', () => {
-    // Erkenne die Orientierung vor dem Start
     if (window.innerWidth > window.innerHeight) {
         orientationMode = 'landscape'; // Querformat
     } else {
