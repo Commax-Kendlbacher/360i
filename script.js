@@ -5,26 +5,21 @@ let initialAlpha = 0, initialBeta = 0, initialGamma = 0;
 let isCalibrated = false;
 
 function init() {
-    // Szene erstellen
     scene = new THREE.Scene();
 
-    // Kamera erstellen
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 0, 0.1);
 
-    // Renderer erstellen
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // 360° Bild laden
     const textureLoader = new THREE.TextureLoader();
     const texture = textureLoader.load('test.jpg', () => {
         console.log('Texture loaded successfully!');
     });
 
-    // Kugel-Geometrie erstellen
-    const geometry = new THREE.SphereGeometry(500, 128, 128);
+    const geometry = new THREE.SphereGeometry(500, 128, 128); // Hochauflösende Kugel
     geometry.scale(-1, 1, 1);
 
     const material = new THREE.MeshBasicMaterial({ map: texture });
@@ -40,12 +35,16 @@ function init() {
             isCalibrated = true;
         }
 
-        const yaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
-        const pitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
-        const roll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
+        const yaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha); // Links/Rechts drehen
+        const pitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta); // Hoch/Runter schauen
+        const roll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma); // Seitliches Neigen
 
-        // Pitch optimieren: Keine Begrenzung für Hoch-/Runterschauen
-        camera.rotation.set(pitch, yaw, -roll);
+        // Setzen der Kamerarotation für alle Achsen
+        camera.rotation.set(
+            Math.max(Math.min(pitch, Math.PI / 2), -Math.PI / 2), // Pitch (begrenzen für Stabilität)
+            yaw, // Yaw
+            -roll // Roll
+        );
     });
 }
 
@@ -65,7 +64,7 @@ document.getElementById('startButton').addEventListener('click', () => {
         DeviceMotionEvent.requestPermission()
             .then((permissionState) => {
                 if (permissionState === 'granted') {
-                    enterFullscreen(); // Vollbildmodus aktivieren
+                    enterFullscreen();
                     init();
                     animate();
                     document.getElementById('startButton').style.display = 'none';
@@ -75,7 +74,7 @@ document.getElementById('startButton').addEventListener('click', () => {
             })
             .catch(console.error);
     } else {
-        enterFullscreen(); // Vollbildmodus aktivieren
+        enterFullscreen();
         init();
         animate();
         document.getElementById('startButton').style.display = 'none';
@@ -83,13 +82,13 @@ document.getElementById('startButton').addEventListener('click', () => {
 });
 
 function enterFullscreen() {
-    const element = document.documentElement; // Vollbildmodus für das gesamte Dokument
+    const element = document.documentElement;
 
     if (element.requestFullscreen) {
         element.requestFullscreen();
-    } else if (element.webkitRequestFullscreen) { // Safari
-        element.webkitRequestFullscreen();
-    } else if (element.msRequestFullscreen) { // Ältere Browser
+    } else if (element.webkitRequestFullscreen) {
+        element.webkitRequestFullscreen(); // Safari auf iOS
+    } else if (element.msRequestFullscreen) {
         element.msRequestFullscreen();
     } else {
         alert('Fullscreen not supported on this device/browser.');
