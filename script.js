@@ -45,34 +45,24 @@ function init() {
         const rawPitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
         const rawRoll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
 
-        const orientation = window.orientation || 0;
-        let adjustedYaw, adjustedPitch;
+        const clampedPitch = Math.max(Math.min(rawPitch, Math.PI / 2 - 0.1), -Math.PI / 2 + 0.1);
 
-        if (orientation === 0) {
-            adjustedYaw = rawYaw;
-            adjustedPitch = rawPitch;
-        } else if (orientation === 90) {
-            adjustedYaw = rawPitch; // Links/Rechts aus Pitch
-            adjustedPitch = -rawYaw; // Hoch/Runter aus Yaw
-        } else if (orientation === -90) {
-            adjustedYaw = -rawPitch; // Links/Rechts aus Pitch
-            adjustedPitch = rawYaw; // Hoch/Runter aus Yaw
-        } else if (orientation === 180) {
-            adjustedYaw = -rawYaw;
-            adjustedPitch = -rawPitch;
-        } else {
-            adjustedYaw = rawYaw;
-            adjustedPitch = rawPitch;
-        }
-
-        const clampedPitch = Math.max(Math.min(adjustedPitch, Math.PI / 2 - 0.1), -Math.PI / 2 + 0.1);
-
-        smoothYaw = applySmoothing(smoothYaw, adjustedYaw);
+        smoothYaw = applySmoothing(smoothYaw, rawYaw);
         smoothPitch = applySmoothing(smoothPitch, clampedPitch);
         smoothRoll = applySmoothing(smoothRoll, rawRoll);
 
         camera.rotation.set(smoothPitch, smoothYaw, -smoothRoll);
     });
+
+    window.addEventListener('deviceorientation', debugOrientation);
+}
+
+function debugOrientation(event) {
+    console.log("Orientation Data:");
+    console.log(`Alpha (Yaw): ${event.alpha}`);
+    console.log(`Beta (Pitch): ${event.beta}`);
+    console.log(`Gamma (Roll): ${event.gamma}`);
+    console.log(`Device Orientation: ${window.orientation || 0}`);
 }
 
 function animate() {
