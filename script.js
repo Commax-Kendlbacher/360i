@@ -5,13 +5,14 @@ let initialAlpha = 0, initialBeta = 0, initialGamma = 0;
 let isCalibrated = false;
 
 let smoothYaw = 0, smoothPitch = 0, smoothRoll = 0;
-let accumulatedYaw = 0; // Akkumulierter Yaw-Wert
-let lastYaw = 0; // Letzter gemessener Yaw-Wert
+let accumulatedYaw = 0;
+let lastYaw = 0;
 
-let isLandscape = false; // Orientierung des Geräts
+let orientationMode = 'portrait'; // 'portrait' oder 'landscape'
 
+// Funktion zur Glättung der Bewegung
 function applySmoothing(current, target, smoothingFactor = 0.1, maxDelta = Math.PI / 8) {
-    if (Math.abs(target - current) > maxDelta) return current; // Ignoriere zu große Änderungen
+    if (Math.abs(target - current) > maxDelta) return current;
     return current + (target - current) * smoothingFactor;
 }
 
@@ -25,10 +26,10 @@ function accumulateYaw(currentYaw) {
         accumulatedYaw += 2 * Math.PI;
     }
 
-    accumulatedYaw += delta; // Akkumuliere die Änderung
-    lastYaw = currentYaw; // Aktualisiere den letzten Yaw-Wert
+    accumulatedYaw += delta;
+    lastYaw = currentYaw;
 
-    return accumulatedYaw; // Rückgabe des kontinuierlichen Yaw-Werts
+    return accumulatedYaw;
 }
 
 function handleOrientation(event) {
@@ -39,37 +40,30 @@ function handleOrientation(event) {
         isCalibrated = true;
     }
 
-    const currentYaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
+    // Berechnung der Achsen basierend auf der Orientierung
+    let currentYaw, rawPitch, rawRoll;
 
-    // Prüfe, ob das Gerät im Querformat ist
-    if (window.innerWidth > window.innerHeight) {
-        isLandscape = true;
+    if (orientationMode === 'portrait') {
+        currentYaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
+        rawPitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
+        rawRoll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
     } else {
-        isLandscape = false;
+        currentYaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
+        rawPitch = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma); // Gamma wird Pitch
+        rawRoll = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);   // Beta wird Roll
     }
 
     const continuousYaw = accumulateYaw(currentYaw);
 
-    // Mappe Achsen basierend auf der Orientierung
-    let rawPitch, rawRoll;
-
-    if (isLandscape) {
-        // Querformat: Beta und Gamma wechseln die Rollen
-        rawPitch = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
-        rawRoll = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
-    } else {
-        // Hochformat: Standardzuordnung
-        rawPitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
-        rawRoll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
-    }
-
     // Begrenze Pitch (Hoch-/Runterschauen)
     const clampedPitch = Math.max(Math.min(rawPitch, Math.PI / 2 - 0.1), -Math.PI / 2 + 0.1);
 
+    // Glättung
     smoothYaw = applySmoothing(smoothYaw, continuousYaw);
     smoothPitch = applySmoothing(smoothPitch, clampedPitch);
     smoothRoll = applySmoothing(smoothRoll, rawRoll);
 
+    // Setze die Kamerarotation
     camera.rotation.set(smoothPitch, smoothYaw, -smoothRoll);
 }
 
@@ -110,6 +104,15 @@ window.addEventListener('resize', () => {
 });
 
 document.getElementById('startButton').addEventListener('click', () => {
+    // Erkenne die Orientierung vor dem Start
+    if (window.innerWidth > window.innerHeight) {
+        orientationMode = 'landscape'; // Querformat
+    } else {
+        orientationMode = 'portrait'; // Hochformat
+    }
+
+    console.log(`Orientation detected: ${orientationMode}`);
+
     if (typeof DeviceMotionEvent.requestPermission === 'function') {
         DeviceMotionEvent.requestPermission()
             .then((permissionState) => {
