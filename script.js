@@ -52,11 +52,14 @@ function handleOrientation(event) {
     // Begrenze Pitch (Hoch-/Runterschauen) und invertiere bei Bedarf
     const clampedPitch = Math.max(Math.min(pitch, Math.PI / 2 - 0.2), -Math.PI / 2 + 0.2);
 
+    // **Inversion der Bewegung beim Hoch-Schauen**
+    const invertedPitch = clampedPitch * -1;
+
     // Debugging-Ausgabe
-    debugOrientation(yaw, clampedPitch, roll);
+    debugOrientation(yaw, invertedPitch, roll);
 
     // Erstelle eine neue Quaternion basierend auf Yaw, Pitch und Roll
-    quaternion.setFromEuler(new THREE.Euler(clampedPitch, yaw, -roll, 'YXZ'));
+    quaternion.setFromEuler(new THREE.Euler(invertedPitch, yaw, -roll, 'YXZ'));
 
     // Glätte die Quaternion
     smoothQuaternion = applyQuaternionSmoothing(smoothQuaternion, quaternion);
