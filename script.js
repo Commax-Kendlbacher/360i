@@ -5,23 +5,28 @@ let initialAlpha = 0, initialBeta = 0, initialGamma = 0;
 let isCalibrated = false;
 
 let smoothYaw = 0, smoothPitch = 0, smoothRoll = 0;
-let previousYaw = 0; // Für kontinuierliche Yaw-Berechnung
+let accumulatedYaw = 0; // Akkumulierte Yaw-Werte
+let previousYawRaw = 0; // Rohwert des vorherigen Yaw
 
 function applySmoothing(current, target, smoothingFactor = 0.1, maxDelta = Math.PI / 8) {
     if (Math.abs(target - current) > maxDelta) return current; // Ignoriere zu große Änderungen
     return current + (target - current) * smoothingFactor;
 }
 
-function normalizeYaw(currentYaw, previousYaw) {
-    const delta = currentYaw - previousYaw;
+function accumulateYaw(currentYawRaw) {
+    const deltaYaw = currentYawRaw - previousYawRaw;
 
-    // Wenn der Delta-Wert zu groß ist, korrigiere ihn
-    if (delta > Math.PI) {
-        return currentYaw - 2 * Math.PI;
-    } else if (delta < -Math.PI) {
-        return currentYaw + 2 * Math.PI;
+    // Behandle Sprünge zwischen 0° und 360° oder -180° und +180°
+    if (deltaYaw > Math.PI) {
+        accumulatedYaw -= 2 * Math.PI - deltaYaw; // Korrigiere Rücksprung
+    } else if (deltaYaw < -Math.PI) {
+        accumulatedYaw += 2 * Math.PI + deltaYaw; // Korrigiere Vorschprung
+    } else {
+        accumulatedYaw += deltaYaw;
     }
-    return currentYaw;
+
+    previousYawRaw = currentYawRaw; // Aktualisiere den vorherigen Rohwert
+    return accumulatedYaw;
 }
 
 function init() {
@@ -54,16 +59,15 @@ function init() {
             isCalibrated = true;
         }
 
-        const currentYaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
-        const normalizedYaw = normalizeYaw(currentYaw, previousYaw);
-        previousYaw = normalizedYaw;
+        const rawYaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
+        const accumulatedYawValue = accumulateYaw(rawYaw);
 
         const rawPitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
         const rawRoll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
 
         const clampedPitch = Math.max(Math.min(rawPitch, Math.PI / 2 - 0.1), -Math.PI / 2 + 0.1);
 
-        smoothYaw = applySmoothing(smoothYaw, normalizedYaw);
+        smoothYaw = applySmoothing(smoothYaw, accumulatedYawValue);
         smoothPitch = applySmoothing(smoothPitch, clampedPitch);
         smoothRoll = applySmoothing(smoothRoll, rawRoll);
 
