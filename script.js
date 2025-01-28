@@ -47,8 +47,8 @@ function handleOrientation(event) {
         }
     }
 
-    // Begrenze Pitch (Hoch-/Runterschauen)
-    const clampedPitch = Math.max(Math.min(pitch, Math.PI / 2 - 0.1), -Math.PI / 2 + 0.1);
+    // Begrenze Pitch (Hoch-/Runterschauen) strikter
+    const clampedPitch = Math.max(Math.min(pitch, Math.PI / 2 - 0.2), -Math.PI / 2 + 0.2);
 
     // Erstelle eine neue Quaternion basierend auf Yaw, Pitch und Roll
     quaternion.setFromEuler(new THREE.Euler(clampedPitch, yaw, -roll, 'YXZ'));
