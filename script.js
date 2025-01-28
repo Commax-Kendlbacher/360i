@@ -5,28 +5,32 @@ let initialAlpha = 0, initialBeta = 0, initialGamma = 0;
 let isCalibrated = false;
 
 let smoothYaw = 0, smoothPitch = 0, smoothRoll = 0;
-let accumulatedYaw = 0; // Akkumulierte Yaw-Werte
-let previousYawRaw = 0; // Rohwert des vorherigen Yaw
+let accumulatedYaw = 0; // Akkumulierter Yaw-Wert
+let lastYaw = 0; // Letzter gemessener Yaw-Wert
 
 function applySmoothing(current, target, smoothingFactor = 0.1, maxDelta = Math.PI / 8) {
     if (Math.abs(target - current) > maxDelta) return current; // Ignoriere zu große Änderungen
     return current + (target - current) * smoothingFactor;
 }
 
-function accumulateYaw(currentYawRaw) {
-    const deltaYaw = currentYawRaw - previousYawRaw;
+function robustDelta(currentYaw, lastYaw) {
+    let delta = currentYaw - lastYaw;
 
-    // Behandle Sprünge zwischen 0° und 360° oder -180° und +180°
-    if (deltaYaw > Math.PI) {
-        accumulatedYaw -= 2 * Math.PI - deltaYaw; // Korrigiere Rücksprung
-    } else if (deltaYaw < -Math.PI) {
-        accumulatedYaw += 2 * Math.PI + deltaYaw; // Korrigiere Vorschprung
-    } else {
-        accumulatedYaw += deltaYaw;
+    // Überprüfen auf 360°-Sprünge und korrigieren
+    if (delta > Math.PI) {
+        delta -= 2 * Math.PI;
+    } else if (delta < -Math.PI) {
+        delta += 2 * Math.PI;
     }
 
-    previousYawRaw = currentYawRaw; // Aktualisiere den vorherigen Rohwert
-    return accumulatedYaw;
+    return delta;
+}
+
+function accumulateYaw(currentYaw) {
+    const delta = robustDelta(currentYaw, lastYaw);
+    accumulatedYaw += delta; // Akkumuliere den Delta-Wert
+    lastYaw = currentYaw; // Aktualisiere den letzten Yaw-Wert
+    return accumulatedYaw; // Gib den kontinuierlichen Yaw-Wert zurück
 }
 
 function init() {
@@ -57,17 +61,18 @@ function init() {
             initialBeta = event.beta || 0;
             initialGamma = event.gamma || 0;
             isCalibrated = true;
+            lastYaw = THREE.MathUtils.degToRad(event.alpha || 0) - initialAlpha; // Initialisiere Yaw
         }
 
-        const rawYaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
-        const accumulatedYawValue = accumulateYaw(rawYaw);
+        const currentYaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
+        const continuousYaw = accumulateYaw(currentYaw);
 
         const rawPitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
         const rawRoll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
 
         const clampedPitch = Math.max(Math.min(rawPitch, Math.PI / 2 - 0.1), -Math.PI / 2 + 0.1);
 
-        smoothYaw = applySmoothing(smoothYaw, accumulatedYawValue);
+        smoothYaw = applySmoothing(smoothYaw, continuousYaw);
         smoothPitch = applySmoothing(smoothPitch, clampedPitch);
         smoothRoll = applySmoothing(smoothRoll, rawRoll);
 
