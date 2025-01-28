@@ -31,31 +31,10 @@ function robustDelta(currentYaw, lastYaw) {
 // Funktion zur Akkumulation von Yaw
 function accumulateYaw(currentYaw) {
     const delta = robustDelta(currentYaw, lastYaw); // Berechne Delta
-    const amplificationFactor = 10; // Verstärkungsfaktor
-    const amplifiedDelta = delta * amplificationFactor;
-
-    // Akkumuliere verstärktes Delta
-    accumulatedYaw += amplifiedDelta;
-
-    // Begrenze die Akkumulation
-    accumulatedYaw = Math.max(Math.min(accumulatedYaw, 2 * Math.PI), -2 * Math.PI);
-
-    // Debugging-Ausgabe
-    debugYawValues(currentYaw, delta, amplifiedDelta, accumulatedYaw);
-
-    // Aktualisiere `lastYaw`
-    lastYaw = currentYaw;
+    accumulatedYaw += delta; // Akkumuliere Delta
+    lastYaw = currentYaw; // Aktualisiere `lastYaw`
 
     return accumulatedYaw; // Gib den akkumulierten Yaw-Wert zurück
-}
-
-// Debugging-Funktion zur Ausgabe von Werten
-function debugYawValues(currentYaw, delta, amplifiedDelta, accumulatedYaw) {
-    console.log(`Current Yaw: ${currentYaw}`);
-    console.log(`Delta Yaw: ${delta}`);
-    console.log(`Amplified Delta Yaw: ${amplifiedDelta}`);
-    console.log(`Accumulated Yaw: ${accumulatedYaw}`);
-    console.log(`Last Yaw: ${lastYaw}`);
 }
 
 // Initialisierung der Szene
