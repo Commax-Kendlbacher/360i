@@ -30,16 +30,15 @@ function robustDelta(currentYaw, lastYaw) {
 
 // Funktion zur Akkumulation von Yaw
 function accumulateYaw(currentYaw) {
-    const delta = robustDelta(currentYaw, lastYaw);
+    const delta = robustDelta(currentYaw, lastYaw); // Berechne Delta
 
-    // Aktualisiere den akkumulierten Yaw-Wert
-    accumulatedYaw += delta;
+    // Debugging: Zeige die Delta-Werte an
+    console.log(`Delta (Before Accumulation): ${delta}`);
 
-    // Speichere den aktuellen Yaw-Wert
-    lastYaw = currentYaw;
+    accumulatedYaw += delta; // Akkumuliere Delta
+    lastYaw = currentYaw; // Aktualisiere `lastYaw`
 
-    // Rückgabe des akkumulierten Yaw-Werts
-    return accumulatedYaw;
+    return accumulatedYaw; // Gib den akkumulierten Yaw-Wert zurück
 }
 
 // Debugging-Funktion zur Ausgabe von Werten
@@ -47,6 +46,7 @@ function debugYawValues(currentYaw, delta, accumulatedYaw) {
     console.log(`Current Yaw: ${currentYaw}`);
     console.log(`Delta Yaw: ${delta}`);
     console.log(`Accumulated Yaw: ${accumulatedYaw}`);
+    console.log(`Last Yaw: ${lastYaw}`);
 }
 
 // Initialisierung der Szene
@@ -86,10 +86,10 @@ function init() {
         const currentYaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
 
         // Akkumuliere den Yaw-Wert
+        const delta = robustDelta(currentYaw, lastYaw);
         const continuousYaw = accumulateYaw(currentYaw);
 
         // Debugging: Überprüfe die Werte
-        const delta = robustDelta(currentYaw, lastYaw);
         debugYawValues(currentYaw, delta, continuousYaw);
 
         // Berechnung von Pitch und Roll
