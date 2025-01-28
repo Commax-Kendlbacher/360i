@@ -55,7 +55,8 @@
                 console.log('Texture loaded successfully!');
             });
 
-            const geometry = new THREE.SphereGeometry(500, 60, 40);
+            // Kugel-Geometrie erstellen
+            const geometry = new THREE.SphereGeometry(500, 128, 128); // Höhere Segmente für bessere Darstellung
             geometry.scale(-1, 1, 1);
 
             const material = new THREE.MeshBasicMaterial({ map: texture });
@@ -73,12 +74,18 @@
                 }
 
                 // Werte relativ zur Kalibrierung berechnen
-                const yaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha); // Yaw: Links/Rechts drehen
-                const pitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta); // Pitch: Hoch/Runter schauen
-                const roll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma); // Roll: Neigen
+                const yaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha); // Links/Rechts drehen
+                const pitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta); // Hoch/Runter schauen
+                const roll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma); // Neigung
+
+                // Pitch begrenzen, um unnatürliche Werte zu vermeiden
+                const clampedPitch = Math.max(Math.min(pitch, Math.PI / 2), -Math.PI / 2); // Begrenzung auf ±90°
+
+                // Debugging: Rotation prüfen
+                console.log(`Pitch: ${clampedPitch}, Yaw: ${yaw}, Roll: ${roll}`);
 
                 // Kamerarotation setzen
-                camera.rotation.set(pitch, yaw, -roll);
+                camera.rotation.set(clampedPitch, yaw, -roll);
             });
         }
 
