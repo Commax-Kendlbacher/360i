@@ -33,6 +33,8 @@
         import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.module.js';
 
         let scene, camera, renderer;
+        let initialAlpha = 0, initialBeta = 0, initialGamma = 0;
+        let isCalibrated = false;
 
         function init() {
             // Szene erstellen
@@ -60,12 +62,22 @@
             const sphere = new THREE.Mesh(geometry, material);
             scene.add(sphere);
 
-            // Bewegungssensor-Daten
+            // Bewegungssensor-Daten verwenden
             window.addEventListener('deviceorientation', (event) => {
-                const alpha = THREE.MathUtils.degToRad(event.alpha || 0);
-                const beta = THREE.MathUtils.degToRad(event.beta || 0);
-                const gamma = THREE.MathUtils.degToRad(event.gamma || 0);
+                if (!isCalibrated) {
+                    // Initialwerte als Referenz für Kalibrierung speichern
+                    initialAlpha = event.alpha || 0;
+                    initialBeta = event.beta || 0;
+                    initialGamma = event.gamma || 0;
+                    isCalibrated = true;
+                }
 
+                // Aktuelle Werte relativ zu den Kalibrierungswerten berechnen
+                const alpha = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
+                const beta = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
+                const gamma = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
+
+                // Kamera-Rotation setzen
                 camera.rotation.set(beta, alpha, gamma);
             });
         }
