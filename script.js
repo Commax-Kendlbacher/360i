@@ -6,7 +6,8 @@ let isCalibrated = false;
 
 let smoothYaw = 0, smoothPitch = 0, smoothRoll = 0;
 
-function applySmoothing(current, target, smoothingFactor = 0.1) {
+function applySmoothing(current, target, smoothingFactor = 0.1, maxDelta = Math.PI / 8) {
+    if (Math.abs(target - current) > maxDelta) return current; // Ignoriere zu große Änderungen
     return current + (target - current) * smoothingFactor;
 }
 
@@ -44,14 +45,28 @@ function init() {
         const targetPitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
         const targetRoll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
 
-        const clampedPitch = Math.max(Math.min(targetPitch, Math.PI / 2 - 0.1), -Math.PI / 2 + 0.1);
+        // Geräteorientierung berücksichtigen
+        const orientation = window.orientation || 0; // 0: Hochformat, 90: Querformat rechts, -90: Querformat links
+        let adjustedYaw = targetYaw;
+        let adjustedPitch = targetPitch;
 
-        if (Math.abs(targetPitch - smoothPitch) > Math.PI / 4) return;
+        if (orientation === 90) {
+            adjustedYaw = targetPitch; // Yaw aus Pitch berechnen
+            adjustedPitch = -targetYaw; // Pitch aus Yaw berechnen
+        } else if (orientation === -90) {
+            adjustedYaw = -targetPitch;
+            adjustedPitch = targetYaw;
+        }
 
-        smoothYaw = applySmoothing(smoothYaw, targetYaw);
+        // Begrenze Pitch-Werte
+        const clampedPitch = Math.max(Math.min(adjustedPitch, Math.PI / 2 - 0.1), -Math.PI / 2 + 0.1);
+
+        // Glättung anwenden
+        smoothYaw = applySmoothing(smoothYaw, adjustedYaw);
         smoothPitch = applySmoothing(smoothPitch, clampedPitch);
         smoothRoll = applySmoothing(smoothRoll, targetRoll);
 
+        // Setze die Kamerarotation
         camera.rotation.set(smoothPitch, smoothYaw, -smoothRoll);
     });
 }
