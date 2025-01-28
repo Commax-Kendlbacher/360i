@@ -52,11 +52,14 @@ function init() {
             adjustedYaw = rawYaw;
             adjustedPitch = rawPitch;
         } else if (orientation === 90) {
-            adjustedYaw = rawPitch;
-            adjustedPitch = -rawYaw;
+            adjustedYaw = rawPitch; // Links/Rechts aus Pitch
+            adjustedPitch = -rawYaw; // Hoch/Runter aus Yaw
         } else if (orientation === -90) {
-            adjustedYaw = -rawPitch;
-            adjustedPitch = rawYaw;
+            adjustedYaw = -rawPitch; // Links/Rechts aus Pitch
+            adjustedPitch = rawYaw; // Hoch/Runter aus Yaw
+        } else if (orientation === 180) {
+            adjustedYaw = -rawYaw;
+            adjustedPitch = -rawPitch;
         } else {
             adjustedYaw = rawYaw;
             adjustedPitch = rawPitch;
