@@ -12,9 +12,23 @@
         canvas {
             display: block;
         }
+        #startButton {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #008cba;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
+    <button id="startButton">Enable Motion</button>
     <script type="module">
         import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.module.js';
 
@@ -46,11 +60,11 @@
             const sphere = new THREE.Mesh(geometry, material);
             scene.add(sphere);
 
-            // Bewegungssensor-Daten verwenden
+            // Bewegungssensor-Daten
             window.addEventListener('deviceorientation', (event) => {
-                const alpha = THREE.MathUtils.degToRad(event.alpha || 0); // Rotation um die Y-Achse
-                const beta = THREE.MathUtils.degToRad(event.beta || 0);   // Rotation um die X-Achse
-                const gamma = THREE.MathUtils.degToRad(event.gamma || 0); // Rotation um die Z-Achse
+                const alpha = THREE.MathUtils.degToRad(event.alpha || 0);
+                const beta = THREE.MathUtils.degToRad(event.beta || 0);
+                const gamma = THREE.MathUtils.degToRad(event.gamma || 0);
 
                 camera.rotation.set(beta, alpha, gamma);
             });
@@ -67,8 +81,27 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        init();
-        animate();
+        document.getElementById('startButton').addEventListener('click', () => {
+            // Berechtigung anfordern (nur für iOS und moderne Browser erforderlich)
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission()
+                    .then((permissionState) => {
+                        if (permissionState === 'granted') {
+                            init();
+                            animate();
+                            document.getElementById('startButton').style.display = 'none';
+                        } else {
+                            alert('Permission denied for motion sensors.');
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                // Für Browser, die keine Berechtigung anfordern
+                init();
+                animate();
+                document.getElementById('startButton').style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
