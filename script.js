@@ -41,41 +41,33 @@ function init() {
             isCalibrated = true;
         }
 
-        const targetYaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
-        const targetPitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
-        const targetRoll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
+        const rawYaw = THREE.MathUtils.degToRad((event.alpha || 0) - initialAlpha);
+        const rawPitch = THREE.MathUtils.degToRad((event.beta || 0) - initialBeta);
+        const rawRoll = THREE.MathUtils.degToRad((event.gamma || 0) - initialGamma);
 
-        // Geräteorientierung berücksichtigen
-        const orientation = window.orientation || 0; // 0: Hochformat, 90: Querformat rechts, -90: Querformat links
+        const orientation = window.orientation || 0;
         let adjustedYaw, adjustedPitch;
 
         if (orientation === 0) {
-            // Hochformat
-            adjustedYaw = targetYaw;
-            adjustedPitch = targetPitch;
+            adjustedYaw = rawYaw;
+            adjustedPitch = rawPitch;
         } else if (orientation === 90) {
-            // Querformat rechts
-            adjustedYaw = targetPitch; // Horizontal wird aus Pitch
-            adjustedPitch = -targetYaw; // Vertikal wird aus Yaw
+            adjustedYaw = rawPitch;
+            adjustedPitch = -rawYaw;
         } else if (orientation === -90) {
-            // Querformat links
-            adjustedYaw = -targetPitch;
-            adjustedPitch = targetYaw;
+            adjustedYaw = -rawPitch;
+            adjustedPitch = rawYaw;
         } else {
-            // Standard (falls keine Orientierung verfügbar)
-            adjustedYaw = targetYaw;
-            adjustedPitch = targetPitch;
+            adjustedYaw = rawYaw;
+            adjustedPitch = rawPitch;
         }
 
-        // Begrenze Pitch-Werte
         const clampedPitch = Math.max(Math.min(adjustedPitch, Math.PI / 2 - 0.1), -Math.PI / 2 + 0.1);
 
-        // Glättung anwenden
         smoothYaw = applySmoothing(smoothYaw, adjustedYaw);
         smoothPitch = applySmoothing(smoothPitch, clampedPitch);
-        smoothRoll = applySmoothing(smoothRoll, targetRoll);
+        smoothRoll = applySmoothing(smoothRoll, rawRoll);
 
-        // Setze die Kamerarotation
         camera.rotation.set(smoothPitch, smoothYaw, -smoothRoll);
     });
 }
