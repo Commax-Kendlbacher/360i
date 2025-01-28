@@ -31,13 +31,13 @@ function robustDelta(currentYaw, lastYaw) {
 // Funktion zur Akkumulation von Yaw
 function accumulateYaw(currentYaw) {
     const delta = robustDelta(currentYaw, lastYaw); // Berechne Delta
-    const amplificationFactor = 5; // Verstärkungsfaktor
+    const amplificationFactor = 10; // Verstärkungsfaktor
     const amplifiedDelta = delta * amplificationFactor;
 
     // Akkumuliere verstärktes Delta
     accumulatedYaw += amplifiedDelta;
 
-    // Begrenzen der Yaw-Werte, falls nötig
+    // Begrenze die Akkumulation
     accumulatedYaw = Math.max(Math.min(accumulatedYaw, 2 * Math.PI), -2 * Math.PI);
 
     // Debugging-Ausgabe
