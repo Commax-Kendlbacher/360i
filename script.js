@@ -47,15 +47,24 @@ function init() {
 
         // Geräteorientierung berücksichtigen
         const orientation = window.orientation || 0; // 0: Hochformat, 90: Querformat rechts, -90: Querformat links
-        let adjustedYaw = targetYaw;
-        let adjustedPitch = targetPitch;
+        let adjustedYaw, adjustedPitch;
 
-        if (orientation === 90) {
-            adjustedYaw = targetPitch; // Yaw aus Pitch berechnen
-            adjustedPitch = -targetYaw; // Pitch aus Yaw berechnen
+        if (orientation === 0) {
+            // Hochformat
+            adjustedYaw = targetYaw;
+            adjustedPitch = targetPitch;
+        } else if (orientation === 90) {
+            // Querformat rechts
+            adjustedYaw = targetPitch; // Horizontal wird aus Pitch
+            adjustedPitch = -targetYaw; // Vertikal wird aus Yaw
         } else if (orientation === -90) {
+            // Querformat links
             adjustedYaw = -targetPitch;
             adjustedPitch = targetYaw;
+        } else {
+            // Standard (falls keine Orientierung verfügbar)
+            adjustedYaw = targetYaw;
+            adjustedPitch = targetPitch;
         }
 
         // Begrenze Pitch-Werte
